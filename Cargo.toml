@@ -1,0 +1,13 @@
+[package]
+name = "passmenu-rs"
+version = "0.1.0"
+authors = ["rupansh-arch <rupanshsekar@hotmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rustofi = { git = "https://github.com/rupansh/rustofi" }
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.5"
+dirs = "2.0.2"
