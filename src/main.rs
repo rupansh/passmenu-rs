@@ -67,9 +67,7 @@ fn app_main() -> RustofiResult {
 
     let args = env::args().collect::<Vec<String>>();
     let mut rofi_args = config::get_conf();
-    if !args.iter().any(|s| s == "new") {
-        ItemList::new(rofi_args, traverse_pass_dir(&pass_dir), Box::new(cb)).display("pass >".to_string())
-    } else {
+    if args.iter().any(|s| s == "new") {
         match rofi_args.iter().position(|r| r == "-lines") {
             Some(i) => rofi_args[i+1] = "0".to_string(),
             _ => { 
@@ -84,7 +82,19 @@ fn app_main() -> RustofiResult {
                 RustofiResult::Success
             },
             _ => RustofiResult::Exit
+        };
+    } else {
+        let callback: fn(&mut String) -> Result<(), String>;
+        let disp: &str;
+        if args.iter().any(|s| s == "del") {
+            callback = cb_del;
+            disp = "pass rm";
+        } else {
+            callback = cb;
+            disp = "pass >";
         }
+
+        return ItemList::new(rofi_args, traverse_pass_dir(&pass_dir), Box::new(callback)).display(disp.to_string());
     }
 }
 
@@ -92,6 +102,15 @@ fn cb(s: &mut String) -> Result<(), String> {
     if s != "" {
         Command::new(PASS_CMD).arg(s).arg("--clip").stdout(Stdio::null()).spawn().expect("FAILED TO DECRYPT");
         println!("Password copied to clipboard!")
+    }
+    Ok(())
+}
+
+fn cb_del(s: &mut String) -> Result<(), String> {
+    if s != "" {
+        let y = Command::new("yes").stdout(Stdio::piped()).spawn().unwrap_or_else(|e| panic!("yes failed to run?! {}", e));
+        Command::new(PASS_CMD).arg("rm").arg(s).stdin(y.stdout.unwrap()).stdout(Stdio::piped()).spawn().expect("FAILED TO DELETE");
+        println!("Password removed");
     }
     Ok(())
 }
