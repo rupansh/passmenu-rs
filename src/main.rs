@@ -30,6 +30,7 @@ use rustofi::{
 
 use std::env;
 use std::fs;
+use std::io::Write;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
@@ -67,7 +68,9 @@ fn app_main() -> RustofiResult {
 
     let args = env::args().collect::<Vec<String>>();
     let mut rofi_args = config::get_conf();
-    if args.iter().any(|s| s == "new") {
+    let new = args.iter().any(|s| s == "new");
+    let ins = args.iter().any(|s| s == "insert");
+    if new || ins {
         match rofi_args.iter().position(|r| r == "-lines") {
             Some(i) => rofi_args[i+1] = "0".to_string(),
             _ => { 
@@ -75,11 +78,25 @@ fn app_main() -> RustofiResult {
                 rofi_args.push("0".to_string())
             }
         }
-        return match EntryBox::display(rofi_args, "pass --generate".to_string()) {
-            RustofiResult::Selection(p) => { 
-                Command::new(PASS_CMD).arg("generate").arg("--clip").arg(p).stdout(Stdio::null()).spawn().expect("FAILED TO GENERATE");
-                println!("Password Generated and copied to clipboard!");
-                RustofiResult::Success
+
+        let disp = if new { "pass generate" } else { "pass insert" };
+        return match EntryBox::display(&rofi_args, disp.to_string()) {
+            RustofiResult::Selection(p) => {
+                if new {
+                    Command::new(PASS_CMD).arg("generate").arg("--clip").arg(p).stdout(Stdio::null()).spawn().expect("FAILED TO GENERATE");
+                    println!("Password Generated and copied to clipboard!");
+                    return RustofiResult::Success;
+                } else {
+                    return match EntryBox::display(&rofi_args, "Enter password to insert".to_string()) {
+                        RustofiResult::Selection(i_p) => {
+                            let p_ins = Command::new(PASS_CMD).arg("insert").arg(p).stdin(Stdio::piped()).stdout(Stdio::null()).spawn().expect("FAILED TO INSERT");
+                            writeln!(p_ins.stdin.unwrap(), "{}\n{}", i_p, i_p).unwrap();
+                            println!("Password added!");
+                            return RustofiResult::Success;
+                        }
+                        _ => RustofiResult::Exit
+                    };
+                }
             },
             _ => RustofiResult::Exit
         };
@@ -94,7 +111,7 @@ fn app_main() -> RustofiResult {
             disp = "pass >";
         }
 
-        return ItemList::new(rofi_args, traverse_pass_dir(&pass_dir), Box::new(callback)).display(disp.to_string());
+        return ItemList::new(&rofi_args, traverse_pass_dir(&pass_dir), Box::new(callback)).display(disp.to_string());
     }
 }
 
@@ -108,8 +125,8 @@ fn cb(s: &mut String) -> Result<(), String> {
 
 fn cb_del(s: &mut String) -> Result<(), String> {
     if s != "" {
-        let y = Command::new("yes").stdout(Stdio::piped()).spawn().unwrap_or_else(|e| panic!("yes failed to run?! {}", e));
-        Command::new(PASS_CMD).arg("rm").arg(s).stdin(y.stdout.unwrap()).stdout(Stdio::piped()).spawn().expect("FAILED TO DELETE");
+        let p_rm = Command::new(PASS_CMD).arg("rm").arg(s).stdin(Stdio::piped()).stdout(Stdio::null()).spawn().expect("FAILED TO DELETE");
+        writeln!(p_rm.stdin.unwrap(), "y").unwrap();
         println!("Password removed");
     }
     Ok(())

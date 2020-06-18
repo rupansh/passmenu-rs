@@ -200,7 +200,7 @@ dependencies = [
 [[package]]
 name = "rustofi"
 version = "0.3.0"
-source = "git+https://github.com/rupansh/rustofi#716a21074151294ffe0a3a796570a19360200256"
+source = "git+https://github.com/rupansh/rustofi#4f1552960356476a58ff4b842cf5211cd5616640"
 dependencies = [
  "num-derive",
  "num-traits",
