@@ -25,6 +25,8 @@ passwordstore (`pass`) \
 
 ### Available Commands
 - `new` - Generate a new password
+- `del` - Delete a password
+- `insert` - Insert a password
 
 ### Config
 example `~/.config/passmenu_rs` (TOML format)
