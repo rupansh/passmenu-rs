@@ -37,7 +37,7 @@ impl Default for DeConfig {
 
 #[derive(Default)]
 pub struct AppConfig {
-    pub rofi_args: String,
+    pub rofi_args: Vec<String>,
     pub pass_cmd: String,
     pub pass_dir: String,
 }
@@ -52,7 +52,7 @@ pub fn get_conf() -> AppConfig {
             c.read_to_string(&mut cs).unwrap_or_default();
             let dc: DeConfig = toml::from_str(&cs).unwrap();
             let app_config = AppConfig {
-                rofi_args: dc.rofi_args,
+                rofi_args: dc.rofi_args.split(" ").map(|s| s.to_string()).collect(),
                 pass_cmd: dc.pass_cmd.unwrap_or(DPASS_CMD.to_string()),
                 pass_dir: dc.pass_dir.unwrap_or(DPASS_DIR.to_string())
             };
