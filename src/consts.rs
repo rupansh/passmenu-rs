@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-pub const PASS_DIR: &str = ".password-store/";
-pub const PASS_CMD: &str = "pass";
+pub const DPASS_DIR: &str = ".password-store/";
+pub const DPASS_CMD: &str = "pass";
 
 pub const CONFIG_NAME: &str = "passmenu_rs";
