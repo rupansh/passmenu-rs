@@ -29,6 +29,11 @@ passwordstore (`pass`) \
 - `insert` - Insert a password
 
 ### Config
+Available Options
+- `rofi_args` - arguments for rofi
+- `pass_cmd` - optional password store command
+- `pass_dir` - optional password store directory from `~/`
+
 example `~/.config/passmenu_rs` (TOML format)
 ```
 rofi_args = "-dpi 80 -show-icons -theme /home/rupansh/slate -lines 8 -padding 18 -width 120 -location 0 -sidebar-mode"
