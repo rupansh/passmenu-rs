@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 mod config;
 mod consts;
+mod utils;
 
 use config::AppConfig;
 use dirs::home_dir;
@@ -27,11 +28,10 @@ use rustofi::{
     RustofiResult,
 };
 use std::env;
-use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
-
+use utils::*;
 
 static APASS_CMD: OnceCell<String> = OnceCell::new();
 type GPassCmd = String;
@@ -46,17 +46,23 @@ impl GetGlobal for GPassCmd {
 }
 
 fn main() {
-    loop {
-        match app_main() {
-            _ => break
-        }
+    let mut res = app_main();
+    match res.0 {
+        RustofiResult::Error(e) => err_info(&mut res.1, e),
+        _ => return
     }
 }
 
-fn app_main() -> RustofiResult {
-    let mut app_config = config::get_conf();
+fn app_main() -> (RustofiResult, Vec<String>) {
+    let app_config = config::get_conf();
     let args = env::args().collect::<Vec<String>>();
 
+    if app_config.is_err() {
+        let err = app_config.err().unwrap();
+        return (RustofiResult::Error(err.0), err.1)
+    }
+
+    let mut app_config = app_config.unwrap();
     APASS_CMD.set(app_config.pass_cmd.clone()).unwrap();
 
     for arg in args.iter() {
@@ -69,21 +75,30 @@ fn app_main() -> RustofiResult {
                 }
             }
 
-            return if arg == "new" { pass_generate(app_config) } else { pass_insert(app_config) }
+            return (if arg == "new" { pass_generate(&app_config) } else { pass_insert(&app_config) }, app_config.rofi_args)
         } else if arg == "del" {
-            return pass_delete(app_config)
+            return (pass_delete(&app_config), app_config.rofi_args)
         }
     }
 
-    return pass_get(app_config)
+    return (pass_get(&app_config), app_config.rofi_args)
 }
 
-fn pass_generate(app_config: AppConfig) -> RustofiResult {
+fn pass_generate(app_config: &AppConfig) -> RustofiResult {
     return passempty_window(
         &app_config,
         "pass generate",
         |app_config: &AppConfig, sel_val: &str, ()| -> RustofiResult {
-            Command::new(app_config.pass_cmd.as_str()).arg("generate").arg("--clip").arg(sel_val).stdout(Stdio::null()).spawn().expect("FAILED TO GENERATE");
+            if Command::new(app_config.pass_cmd.as_str())
+                .arg("generate")
+                .arg("--clip")
+                .arg(sel_val)
+                .stdout(Stdio::null())
+                .spawn()
+                .is_err() {
+                    return RustofiResult::Error("Failed to run pass generate".to_string())
+                }
+
             println!("Password Generated and copied to clipboard!");
             return RustofiResult::Success;
         },
@@ -91,7 +106,7 @@ fn pass_generate(app_config: AppConfig) -> RustofiResult {
     );
 }
 
-fn pass_insert(app_config: AppConfig) -> RustofiResult {
+fn pass_insert(app_config: &AppConfig) -> RustofiResult {
     return passempty_window(
         &app_config,
         "pass insert",
@@ -100,7 +115,18 @@ fn pass_insert(app_config: AppConfig) -> RustofiResult {
                 app_config,
                 "Enter password to insert",
                 |app_config: &AppConfig, sel_val: &str, prev_val: &str| -> RustofiResult {
-                    let p_ins = Command::new(app_config.pass_cmd.as_str()).arg("insert").arg(prev_val).stdin(Stdio::piped()).stdout(Stdio::null()).spawn().expect("FAILED TO INSERT");
+                    let p_ins = 
+                    Command::new(app_config.pass_cmd.as_str())
+                        .arg("insert").arg(prev_val)
+                        .stdin(Stdio::piped())
+                        .stdout(Stdio::null())
+                        .spawn();
+
+                    if p_ins.is_err() {
+                        return RustofiResult::Error("Failed to run pass insert".to_string());
+                    }
+
+                    let p_ins = p_ins.unwrap();
                     writeln!(p_ins.stdin.unwrap(), "{}\n{}", sel_val, sel_val).unwrap();
                     println!("Password added!");
                     return RustofiResult::Success;
@@ -112,13 +138,25 @@ fn pass_insert(app_config: AppConfig) -> RustofiResult {
     );
 }
 
-fn pass_delete(app_config: AppConfig) -> RustofiResult {
+fn pass_delete(app_config: &AppConfig) -> RustofiResult {
     return passlist_window(
         &app_config,
         "pass rm",
         |s: &mut String| {
             if s != "" {
-                let p_rm = Command::new(GPassCmd::global()).arg("rm").arg(s).stdin(Stdio::piped()).stdout(Stdio::null()).spawn().expect("FAILED TO DELETE");
+                let p_rm = 
+                Command::new(GPassCmd::global())
+                    .arg("rm")
+                    .arg(s)
+                    .stdin(Stdio::piped())
+                    .stdout(Stdio::null())
+                    .spawn();
+
+                if p_rm.is_err() {
+                    return Err("Failed to run pass rm".to_string());
+                }
+
+                let p_rm = p_rm.unwrap();
                 writeln!(p_rm.stdin.unwrap(), "y").unwrap();
                 println!("Password removed");
             }
@@ -127,13 +165,21 @@ fn pass_delete(app_config: AppConfig) -> RustofiResult {
     );
 }
 
-fn pass_get(app_config: AppConfig) -> RustofiResult {
+fn pass_get(app_config: &AppConfig) -> RustofiResult {
     return passlist_window(
         &app_config, 
         "pass >", 
         |s: &mut String| {
             if s != "" {
-                Command::new(GPassCmd::global()).arg(s).arg("--clip").stdout(Stdio::null()).spawn().expect("FAILED TO DECRYPT");
+                if Command::new(GPassCmd::global())
+                    .arg(s)
+                    .arg("--clip")
+                    .stdout(Stdio::null())
+                    .spawn()
+                    .is_err() {
+                        return Err("Failed to run pass".to_string());
+                    }
+
                 println!("Password copied to clipboard!")
             }
             Ok(())
@@ -146,36 +192,16 @@ fn passempty_window<T>(app_config: &AppConfig, display: &str, callback: fn(&AppC
         RustofiResult::Selection(p) => {
             callback(app_config, &p, args)
         },
-        _ => RustofiResult::Exit
+        e => e
     };
 }
 
 fn passlist_window(app_config: &AppConfig, display: &str, callback: fn(&mut String) -> Result<(), String>) -> RustofiResult {
-    let pass_dir: PathBuf = match home_dir() {
-        Some(p) => [p, PathBuf::from(app_config.pass_dir.as_str())].iter().collect(),
-        _ => return RustofiResult::Exit
-    };
+    let pass_dir: PathBuf = [home_dir().unwrap(), PathBuf::from(app_config.pass_dir.as_str())].iter().collect();
 
     return ItemList::new(
         &app_config.rofi_args,
         traverse_pass_dir(app_config.pass_dir.as_str(), &pass_dir),
         Box::new(callback)).display(display.to_string()
     );
-}
-
-fn traverse_pass_dir(root: &str, pass_dir: &PathBuf) -> Vec<String> {
-    let mut pass_l: Vec<String> = Vec::new();
-    for pass_e in fs::read_dir(pass_dir).unwrap() {
-        let pass = pass_e.unwrap().path();
-        if pass.is_dir() {
-            pass_l.append(&mut traverse_pass_dir(root, &pass));
-        } else {
-            match pass.extension() {
-                Some(s) => if s == "gpg" { pass_l.push(pass.to_str().unwrap().split(root).nth(1).unwrap().replace(".gpg", "").to_string()) },
-                _ => {}
-            }
-        }
-    }
-
-    return pass_l;
 }
