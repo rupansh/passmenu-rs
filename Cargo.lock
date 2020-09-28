@@ -129,7 +129,7 @@ checksum = "260e51e7efe62b592207e9e13a68e43692a7a279171d6ba57abd208bf23645ad"
 
 [[package]]
 name = "passmenu-rs"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "dirs",
  "once_cell",
