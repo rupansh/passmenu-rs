@@ -78,6 +78,8 @@ fn app_main() -> (RustofiResult, Vec<String>) {
             return (if arg == "new" { pass_generate(&app_config) } else { pass_insert(&app_config) }, app_config.rofi_args)
         } else if arg == "del" {
             return (pass_delete(&app_config), app_config.rofi_args)
+        } else if arg == "otp" {
+            return (pass_otp(&app_config), app_config.rofi_args);
         }
     }
 
@@ -172,6 +174,29 @@ fn pass_get(app_config: &AppConfig) -> RustofiResult {
         |s: &mut String| {
             if s != "" {
                 if Command::new(GPassCmd::global())
+                    .arg(s)
+                    .arg("--clip")
+                    .stdout(Stdio::null())
+                    .spawn()
+                    .is_err() {
+                        return Err("Failed to run pass".to_string());
+                    }
+
+                println!("Password copied to clipboard!")
+            }
+            Ok(())
+        }
+    );
+}
+
+fn pass_otp(app_config: &AppConfig) -> RustofiResult {
+    return passlist_window(
+        &app_config,
+        "pass otp >",
+        |s: &mut String| {
+            if s != "" {
+                if Command::new(GPassCmd::global())
+                    .arg("otp")
                     .arg(s)
                     .arg("--clip")
                     .stdout(Stdio::null())
