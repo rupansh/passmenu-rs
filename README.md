@@ -27,6 +27,7 @@ passwordstore (`pass`) \
 - `new` - Generate a new password
 - `del` - Delete a password
 - `insert` - Insert a password
+- `otp` - Get OTP passcodes
 
 ### Config
 Available Options
