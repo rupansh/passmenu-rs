@@ -68,7 +68,7 @@ fn app_main() -> (RustofiResult, Vec<String>) {
     APASS_CMD.set(app_config.pass_cmd.clone()).unwrap();
 
     for arg in args.iter() {
-        if arg == "new" || arg == "ins" {
+        if arg == "new" || arg == "ins" || arg == "otp-ins" {
             match app_config.rofi_args.iter().position(|r| r == "-lines") {
                 Some(i) => app_config.rofi_args[i+1] = "0".to_string(),
                 _ => { 
@@ -77,13 +77,11 @@ fn app_main() -> (RustofiResult, Vec<String>) {
                 }
             }
 
-            return (if arg == "new" { pass_generate(&app_config) } else { pass_insert(&app_config) }, app_config.rofi_args)
+            return (if arg == "new" { pass_generate(&app_config) } else if arg == "ins" { pass_insert(&app_config) } else { pass_otp_insert(&app_config) }, app_config.rofi_args)
         } else if arg == "del" {
             return (pass_delete(&app_config), app_config.rofi_args)
         } else if arg == "otp" {
             return (pass_otp(&app_config), app_config.rofi_args);
-        } else if arg == "otp-ins" {
-            return (pass_otp_insert(&app_config), app_config.rofi_args);
         }
     }
 

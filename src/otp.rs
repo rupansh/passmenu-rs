@@ -32,7 +32,7 @@ pub fn pass_otp_insert(app_config: &AppConfig) -> RustofiResult {
         |app_config: &AppConfig, sel_val: &str, ()| -> RustofiResult {
             return passempty_window(
                 app_config,
-                "Enter password to insert",
+                "Enter OTP to insert",
                 |app_config: &AppConfig, sel_val: &str, prev_val: &str| -> RustofiResult {
                     let p_ins = Command::new(app_config.pass_cmd.as_str())
                         .arg("otp")
@@ -48,7 +48,7 @@ pub fn pass_otp_insert(app_config: &AppConfig) -> RustofiResult {
 
                     let p_ins = p_ins.unwrap();
                     writeln!(p_ins.stdin.unwrap(), "{}\n{}", sel_val, sel_val).unwrap();
-                    println!("Password added!");
+                    println!("Pass OTP added!");
                     return RustofiResult::Success;
                 },
                 sel_val,
