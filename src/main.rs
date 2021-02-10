@@ -19,6 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 mod config;
 mod consts;
 mod utils;
+mod otp;
 
 use config::AppConfig;
 use dirs::home_dir;
@@ -32,6 +33,7 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use utils::*;
+use otp::{pass_otp};
 
 static APASS_CMD: OnceCell<String> = OnceCell::new();
 type GPassCmd = String;
@@ -189,29 +191,6 @@ fn pass_get(app_config: &AppConfig) -> RustofiResult {
     );
 }
 
-fn pass_otp(app_config: &AppConfig) -> RustofiResult {
-    return passlist_window(
-        &app_config,
-        "pass otp >",
-        |s: &mut String| {
-            if s != "" {
-                if Command::new(GPassCmd::global())
-                    .arg("otp")
-                    .arg(s)
-                    .arg("--clip")
-                    .stdout(Stdio::null())
-                    .spawn()
-                    .is_err() {
-                        return Err("Failed to run pass".to_string());
-                    }
-
-                println!("Password copied to clipboard!")
-            }
-            Ok(())
-        }
-    );
-}
-
 fn passempty_window<T>(app_config: &AppConfig, display: &str, callback: fn(&AppConfig, &str, T) -> RustofiResult, args: T) -> RustofiResult {
     return match EntryBox::display(&app_config.rofi_args, display.to_string()) {
         RustofiResult::Selection(p) => {
@@ -221,7 +200,7 @@ fn passempty_window<T>(app_config: &AppConfig, display: &str, callback: fn(&AppC
     };
 }
 
-fn passlist_window(app_config: &AppConfig, display: &str, callback: fn(&mut String) -> Result<(), String>) -> RustofiResult {
+pub fn passlist_window(app_config: &AppConfig, display: &str, callback: fn(&mut String) -> Result<(), String>) -> RustofiResult {
     let pass_dir: PathBuf = [home_dir().unwrap(), PathBuf::from(app_config.pass_dir.as_str())].iter().collect();
 
     return ItemList::new(
