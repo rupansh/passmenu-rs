@@ -27,7 +27,12 @@ passwordstore (`pass`) \
 - `new` - Generate a new password
 - `del` - Delete a password
 - `insert` - Insert a password
+
+### Available Subcommands
+
+#### [Pass OTP](https://github.com/tadfisher/pass-otp)
 - `otp` - Get OTP passcodes
+- `otp-ins` - Insert OTP key as a url
 
 ### Config
 Available Options

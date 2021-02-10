@@ -33,7 +33,7 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use utils::*;
-use otp::{pass_otp};
+use otp::{pass_otp, pass_otp_insert};
 
 static APASS_CMD: OnceCell<String> = OnceCell::new();
 type GPassCmd = String;
@@ -82,6 +82,8 @@ fn app_main() -> (RustofiResult, Vec<String>) {
             return (pass_delete(&app_config), app_config.rofi_args)
         } else if arg == "otp" {
             return (pass_otp(&app_config), app_config.rofi_args);
+        } else if arg == "otp-ins" {
+            return (pass_otp_insert(&app_config), app_config.rofi_args);
         }
     }
 
@@ -200,7 +202,7 @@ fn passempty_window<T>(app_config: &AppConfig, display: &str, callback: fn(&AppC
     };
 }
 
-pub fn passlist_window(app_config: &AppConfig, display: &str, callback: fn(&mut String) -> Result<(), String>) -> RustofiResult {
+fn passlist_window(app_config: &AppConfig, display: &str, callback: fn(&mut String) -> Result<(), String>) -> RustofiResult {
     let pass_dir: PathBuf = [home_dir().unwrap(), PathBuf::from(app_config.pass_dir.as_str())].iter().collect();
 
     return ItemList::new(
