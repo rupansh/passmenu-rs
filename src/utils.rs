@@ -1,3 +1,5 @@
+use crate::AppConfig;
+
 use rustofi::components::EntryBox;
 use std::fs;
 use std::path::PathBuf;
@@ -29,4 +31,14 @@ pub fn traverse_pass_dir(root: &str, pass_dir: &PathBuf) -> Vec<String> {
     }
 
     return pass_l;
+}
+
+pub fn zero_lines(app_config: &mut AppConfig) {
+    match app_config.rofi_args.iter().position(|r| r == "-lines") {
+        Some(i) => app_config.rofi_args[i+1] = "0".to_string(),
+        _ => { 
+            app_config.rofi_args.push("-lines".to_string());
+            app_config.rofi_args.push("0".to_string())
+        }
+    }
 }

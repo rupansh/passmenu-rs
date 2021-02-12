@@ -19,6 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 mod config;
 mod consts;
 mod utils;
+mod otp;
 
 use config::AppConfig;
 use dirs::home_dir;
@@ -65,19 +66,19 @@ fn app_main() -> (RustofiResult, Vec<String>) {
     let mut app_config = app_config.unwrap();
     APASS_CMD.set(app_config.pass_cmd.clone()).unwrap();
 
-    for arg in args.iter() {
+    let arg_iter = args.iter().map(String::as_str);
+    for arg in arg_iter.clone() {
+        // TODO: Better way to do this
         if arg == "new" || arg == "ins" {
-            match app_config.rofi_args.iter().position(|r| r == "-lines") {
-                Some(i) => app_config.rofi_args[i+1] = "0".to_string(),
-                _ => { 
-                    app_config.rofi_args.push("-lines".to_string());
-                    app_config.rofi_args.push("0".to_string())
-                }
-            }
+            zero_lines(&mut app_config);
+        }
 
-            return (if arg == "new" { pass_generate(&app_config) } else { pass_insert(&app_config) }, app_config.rofi_args)
-        } else if arg == "del" {
-            return (pass_delete(&app_config), app_config.rofi_args)
+        match arg {
+            "new" => return (pass_generate(&app_config), app_config.rofi_args),
+            "ins" => return (pass_insert(&app_config), app_config.rofi_args),
+            "del" => return (pass_delete(&app_config), app_config.rofi_args),
+            "otp" => return (otp::parse_cmd(&mut app_config, arg_iter.clone()), app_config.rofi_args),
+            _ => ()
         }
     }
 
