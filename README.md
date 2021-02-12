@@ -32,7 +32,7 @@ passwordstore (`pass`) \
 
 #### [Pass OTP](https://github.com/tadfisher/pass-otp)
 - `otp` - Get OTP passcodes
-- `otp-ins` - Insert OTP key as a url
+- `otp insert` - Insert OTP key as a url
 
 ### Config
 Available Options

@@ -1,11 +1,24 @@
 use crate::config::AppConfig;
 use crate::{passempty_window, passlist_window, GPassCmd, GetGlobal};
+use crate::utils::zero_lines;
 
 use rustofi::RustofiResult;
 use std::io::Write;
 use std::process::{Command, Stdio};
 
-pub fn pass_otp(app_config: &AppConfig) -> RustofiResult {
+
+pub fn parse_cmd<'a>(app_config: &mut AppConfig, cmd_list: impl Iterator<Item = &'a str>) -> RustofiResult {
+    for cmd in cmd_list {
+        match cmd {
+            "insert" => { zero_lines(app_config); return pass_otp_insert(app_config) },
+            _ => ()
+        }
+    }
+    return pass_otp(app_config);
+}
+
+
+fn pass_otp(app_config: &AppConfig) -> RustofiResult {
     return passlist_window(&app_config, "pass otp >", |s: &mut String| {
         if s != "" {
             if Command::new(GPassCmd::global())
@@ -25,7 +38,7 @@ pub fn pass_otp(app_config: &AppConfig) -> RustofiResult {
     });
 }
 
-pub fn pass_otp_insert(app_config: &AppConfig) -> RustofiResult {
+fn pass_otp_insert(app_config: &AppConfig) -> RustofiResult {
     return passempty_window(
         &app_config,
         "pass otp insert",
