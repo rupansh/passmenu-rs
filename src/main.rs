@@ -46,43 +46,42 @@ impl GetGlobal for GPassCmd {
     }
 }
 
-fn main() {
-    let mut res = app_main();
-    match res.0 {
-        RustofiResult::Error(e) => err_info(&mut res.1, e),
-        _ => return
+fn main() -> Result<(), String> {
+    let app_config = config::get_conf();
+    if let Err((e, mut args)) = app_config {
+        return err_info(&mut args, e);
     }
+    let mut app_config = app_config.unwrap();
+
+    if let RustofiResult::Error(e) = app_main(&mut app_config) {
+        return err_info(&mut app_config.rofi_args, e);
+    }
+
+    Ok(())
 }
 
-fn app_main() -> (RustofiResult, Vec<String>) {
-    let app_config = config::get_conf();
+fn app_main(app_config: &mut AppConfig) -> RustofiResult {
     let args = env::args().collect::<Vec<String>>();
 
-    if app_config.is_err() {
-        let err = app_config.err().unwrap();
-        return (RustofiResult::Error(err.0), err.1)
-    }
-
-    let mut app_config = app_config.unwrap();
     APASS_CMD.set(app_config.pass_cmd.clone()).unwrap();
 
     let arg_iter = args.iter().map(String::as_str);
     for arg in arg_iter.clone() {
         // TODO: Better way to do this
         if arg == "new" || arg == "ins" {
-            zero_lines(&mut app_config);
+            zero_lines(app_config);
         }
 
         match arg {
-            "new" => return (pass_generate(&app_config), app_config.rofi_args),
-            "ins" => return (pass_insert(&app_config), app_config.rofi_args),
-            "del" => return (pass_delete(&app_config), app_config.rofi_args),
-            "otp" => return (otp::parse_cmd(&mut app_config, arg_iter.clone()), app_config.rofi_args),
+            "new" => return pass_generate(app_config),
+            "ins" => return pass_insert(app_config),
+            "del" => return pass_delete(app_config),
+            "otp" => return otp::parse_cmd(app_config, arg_iter.clone()),
             _ => ()
         }
     }
 
-    return (pass_get(&app_config), app_config.rofi_args)
+    return pass_get(app_config)
 }
 
 fn pass_generate(app_config: &AppConfig) -> RustofiResult {

@@ -4,7 +4,7 @@ use rustofi::components::EntryBox;
 use std::fs;
 use std::path::PathBuf;
 
-pub fn err_info(rofi_args: &mut Vec<String>, s: String) {
+pub fn err_info(rofi_args: &mut Vec<String>, s: String) -> Result<(), String> {
     match rofi_args.iter().position(|r| r == "-lines") {
         Some(i) => rofi_args[i+1] = "0".to_string(),
         _ => { 
@@ -14,6 +14,8 @@ pub fn err_info(rofi_args: &mut Vec<String>, s: String) {
     }
 
     EntryBox::display(&rofi_args, format!("passmenu-rs failed with err: {}", s));
+
+    return Err(s)
 }
 
 pub fn traverse_pass_dir(root: &str, pass_dir: &PathBuf) -> Vec<String> {
