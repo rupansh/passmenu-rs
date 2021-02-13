@@ -1,6 +1,7 @@
 use crate::config::AppConfig;
-use crate::{passempty_window, passlist_window, GPassCmd, GetGlobal};
+use crate::{GPassCmd, GetGlobal};
 use crate::utils::zero_lines;
+use crate::widgets::*;
 
 use rustofi::RustofiResult;
 use std::io::Write;

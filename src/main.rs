@@ -20,19 +20,18 @@ mod config;
 mod consts;
 mod utils;
 mod otp;
+mod widgets;
+
+use crate::widgets::*;
 
 use config::AppConfig;
-use dirs::home_dir;
 use once_cell::sync::OnceCell;
-use rustofi::{
-    components::*,
-    RustofiResult,
-};
+use rustofi::RustofiResult;
 use std::env;
 use std::io::Write;
-use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use utils::*;
+
 
 static APASS_CMD: OnceCell<String> = OnceCell::new();
 type GPassCmd = String;
@@ -45,6 +44,7 @@ impl GetGlobal for GPassCmd {
         return APASS_CMD.get().expect("INVALID PASS_CMD USAGE!! REPORT TO DEV!!")
     }
 }
+
 
 fn main() -> Result<(), String> {
     let app_config = config::get_conf();
@@ -184,24 +184,5 @@ fn pass_get(app_config: &AppConfig) -> RustofiResult {
             }
             Ok(())
         }
-    );
-}
-
-fn passempty_window<T>(app_config: &AppConfig, display: &str, callback: fn(&AppConfig, &str, T) -> RustofiResult, args: T) -> RustofiResult {
-    return match EntryBox::display(&app_config.rofi_args, display.to_string()) {
-        RustofiResult::Selection(p) => {
-            callback(app_config, &p, args)
-        },
-        e => e
-    };
-}
-
-fn passlist_window(app_config: &AppConfig, display: &str, callback: fn(&mut String) -> Result<(), String>) -> RustofiResult {
-    let pass_dir: PathBuf = [home_dir().unwrap(), PathBuf::from(app_config.pass_dir.as_str())].iter().collect();
-
-    return ItemList::new(
-        &app_config.rofi_args,
-        traverse_pass_dir(app_config.pass_dir.as_str(), &pass_dir),
-        Box::new(callback)).display(display.to_string()
     );
 }
