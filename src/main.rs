@@ -68,13 +68,13 @@ fn app_main(app_config: &mut AppConfig) -> RustofiResult {
     let arg_iter = args.iter().map(String::as_str);
     for arg in arg_iter.clone() {
         // TODO: Better way to do this
-        if arg == "new" || arg == "ins" {
+        if arg == "new" || arg == "insert" {
             zero_lines(app_config);
         }
 
         match arg {
             "new" => return pass_generate(app_config),
-            "ins" => return pass_insert(app_config),
+            "insert" => return pass_insert(app_config),
             "del" => return pass_delete(app_config),
             "otp" => return otp::parse_cmd(app_config, arg_iter.clone()),
             _ => ()
