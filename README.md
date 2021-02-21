@@ -13,28 +13,35 @@ YES I READ ROFI's README.MD's LAST LINE
 #
 
 
-### Prerequisites
+# Installation
+
+### Cargo
+
+#### Prerequisites
 Rust 2018 \
 passwordstore (`pass`) \
 [rofi](https://github.com/davatorium/rofi/)
 
-### Usage
 `cargo install --git https://github.com/rupansh/passmenu-rs.git --branch master`
 
+### Arch Linux (AUR)
+[passmenu-rs-git](https://aur.archlinux.org/packages/passmenu-rs-git/)
+
+## Usage
 `passmenu-rs [optional-command]`
 
-### Available Commands
+## Available Commands
 - `new` - Generate a new password
 - `del` - Delete a password
 - `insert` - Insert a password
 
-### Available Subcommands
+## Available Subcommands
 
-#### [Pass OTP](https://github.com/tadfisher/pass-otp)
+### [Pass OTP](https://github.com/tadfisher/pass-otp)
 - `otp` - Get OTP passcodes
 - `otp insert` - Insert OTP key as a url
 
-### Config
+## Config
 Available Options
 - `rofi_args` - arguments for rofi
 - `pass_cmd` - optional password store command
